@@ -14,7 +14,7 @@ using namespace std;
 class CMD5
 {
   public:
-  std::vector<unsigned char> CMD5::get_hex();
+  std::vector<unsigned char> get_hex();
 
   private:
 #define uint8  unsigned char
@@ -418,9 +418,16 @@ void GenUrl(const std::string& bucket, const std::string& object, std::string& u
     url.append(object);
 }
 
+
+
+
+// =========================================================================
 const int MD5_LEN = 16;
 const int BUCKET_SHARD_NUM = 1024;
-int32_t GetShardKey(const std::string &bucket, const std::string &object) {
+
+// original wrong one
+int32_t get_shard_key0(const std::string &bucket, const std::string &object) {
+
   std::string url;// = "bs://zyb-hiphotos/3801213fb80e7bec5e56593c292eb9389a506b5a.jpg";
   GenUrl(bucket, object, url);
 
@@ -429,27 +436,149 @@ int32_t GetShardKey(const std::string &bucket, const std::string &object) {
   std::string md5sum = iMD5.ToString();
 
   unsigned char* p = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(md5sum.data()));
+  std::vector<unsigned char> md5_raw = iMD5.get_hex();
+
   unsigned char temp[MD5_LEN/4] = {};
   for (size_t i = 0; i < 4; i++) {
-    temp[i] = p[i] ^ p[i + 4] ^ p[i + 8] ^ p[i + 12];
+//     temp[i] = p[i] ^ p[i + 4] ^ p[i + 8] ^ p[i + 12];
+//     temp[i] = p[i * 4] ^ p[i * 4 + 1] ^ p[i * 4 + 2] ^ p[i * 4 + 3];
+    temp[i] = md5_raw[i] ^ md5_raw[i + 4] ^ md5_raw[i + 8] ^ md5_raw[i + 12];
+//     temp[i] = md5_raw[i * 4] ^ md5_raw[i * 4 + 1] ^ md5_raw[i * 4 + 2] ^ md5_raw[i * 4 + 3];
   }
   uint32_t shard_key = 0;
   for (size_t i = 0; i < 4; i++) {
     shard_key << 4;
-//     shard_key = shard_key << 4;
     shard_key += static_cast<uint32_t>(temp[i]);
   }
+
+  return static_cast<int32_t>(shard_key % BUCKET_SHARD_NUM);
+
+}
+
+// the corrected original one
+int32_t get_shard_key1(const std::string &bucket, const std::string &object) {
+
+  std::string url;// = "bs://zyb-hiphotos/3801213fb80e7bec5e56593c292eb9389a506b5a.jpg";
+  GenUrl(bucket, object, url);
+
+  CMD5 iMD5;
+  iMD5.GenerateMD5((unsigned char*)url.data(), url.size());
+  std::string md5sum = iMD5.ToString();
+
+  unsigned char* p = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(md5sum.data()));
+  std::vector<unsigned char> md5_raw = iMD5.get_hex();
+
+  unsigned char temp[MD5_LEN/4] = {};
+  for (size_t i = 0; i < 4; i++) {
+//     temp[i] = p[i] ^ p[i + 4] ^ p[i + 8] ^ p[i + 12];
+//     temp[i] = p[i * 4] ^ p[i * 4 + 1] ^ p[i * 4 + 2] ^ p[i * 4 + 3];
+    temp[i] = md5_raw[i] ^ md5_raw[i + 4] ^ md5_raw[i + 8] ^ md5_raw[i + 12];
+//     temp[i] = md5_raw[i * 4] ^ md5_raw[i * 4 + 1] ^ md5_raw[i * 4 + 2] ^ md5_raw[i * 4 + 3];
+  }
+  uint32_t shard_key = 0;
+  for (size_t i = 0; i < 4; i++) {
+//     shard_key << 4;
+//     shard_key = shard_key << 4;
+    shard_key = shard_key << 8;
+    shard_key += static_cast<uint32_t>(temp[i]);
+  }
+
   return static_cast<int32_t>(shard_key % BUCKET_SHARD_NUM);
 }
 
+// use all bits
+int32_t get_shard_key2(const std::string &bucket, const std::string &object) {
+  std::string url;// = "bs://zyb-hiphotos/3801213fb80e7bec5e56593c292eb9389a506b5a.jpg";
+  GenUrl(bucket, object, url);
+
+  CMD5 iMD5;
+  iMD5.GenerateMD5((unsigned char*)url.data(), url.size());
+
+  std::vector<unsigned char> md5_raw = iMD5.get_hex();
+
+  std::vector<unsigned char> md5_bin(128, 0);
+
+  for (int i = 0; i < 16; ++i) {
+    unsigned char c = md5_raw[i];
+    for (int j = 0; j < 8; ++j) {
+      if (c & 0x01) {
+        md5_bin[8 * i + j] = 1;
+      } else {
+        md5_bin[8 * i + j] = 0;
+      }
+      c >>= 1;
+    }
+  }
+
+  int32_t shard_key = 0;
+  int cnt0 = 0;
+  int cnt1 = 0;
+  for (int i = 0; i < 128; ++i) {
+    if (md5_bin[i]) {
+      ++cnt1;
+    } else {
+      ++cnt0;
+    }
+    if (i % 13 == 0) {
+      if (cnt1 > cnt0) {
+        // cur bit is 1
+        shard_key |= 1;
+      }
+      shard_key <<= 1;
+      cnt0 = 0;
+      cnt1 = 0;
+    }
+  }
+  if (cnt1 > cnt0) {
+    // cur bit is 1
+    shard_key |= 1;
+  }
+
+  return shard_key;
+}
+
+// 2016-03-16 fuqiang
+int32_t get_shard_key3(const std::string &bucket, const std::string &object) {
+  std::string url;// = "bs://zyb-hiphotos/3801213fb80e7bec5e56593c292eb9389a506b5a.jpg";
+  GenUrl(bucket, object, url);
+
+  CMD5 iMD5;
+  iMD5.GenerateMD5((unsigned char*)url.data(), url.size());
+  std::string md5sum = iMD5.ToString();
+//   std::cout << md5sum << std::endl;
+
+  std::vector<unsigned char> md5_raw = iMD5.get_hex();
+  char tmp[16];
+  for (int i = 0; i < 16; ++i) {
+    tmp[i] = md5_raw[i];
+  }
+  uint32_t* tmp1 = reinterpret_cast<uint32_t*>(tmp);
+//   return static_cast<int32_t>((md5_raw[0]^md5_raw[1]^md5_raw[2]^md5_raw[3]) % BUCKET_SHARD_NUM);
+  return static_cast<int32_t>((tmp1[0]^tmp1[1]^tmp1[2]^tmp1[3]) % BUCKET_SHARD_NUM);
+
+}
+
+int32_t GetShardKey(const std::string &bucket, const std::string &object) {
+
+//   return get_shard_key0(bucket, object);
+//   return get_shard_key1(bucket, object);
+//      return get_shard_key2(bucket, object);
+  // 20160316 32 bit
+  return get_shard_key3(bucket, object);
+}
+
+#include <cstdlib>
+#include <ctime>
+
 std::string get_random_str(int ascii_start = 33, int ascii_end = 126) {
-  int rand_len = rand()%50;
+  int rand_len = rand() % 50;
+  rand_len += 1;
   char c;
   char* buf = new char[rand_len + 1];
   buf[rand_len] = '\0';
   for (int i = 0; i < rand_len; ++i) {
     // 33 - 126, visible chars
-    c = rand()%(ascii_end - ascii_start);
+    c = rand() % (ascii_end - ascii_start);
     c += ascii_start;
     buf[i] = c;
   }
@@ -487,6 +616,9 @@ void test_shard_key() {
 //      bucket = get_random_str();
      object = get_random_str();
      int shard_index = GetShardKey(bucket, object);
+     if (shard_index < 0) {
+       std::cout << "!!!!!!!!!!!!!boom!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+     }
      ++counters[shard_index];
   }
 //   sort(counters.begin(), counters.end());
@@ -506,9 +638,21 @@ void test_shard_key() {
   }
 }
 
+
+void test_single_shard_key() {
+  std::string bucket = "test_bucket";
+  std::string object = "test_object";
+//   std::cout << (-100) % 13 << std::endl;
+  std::cout << GetShardKey(bucket, object) << std::endl;
+}
+
 int main(void) {
 //   test_shard_key();
-  test_md5();
+  test_single_shard_key();
+//   test_md5();
+//   for (int i = 0; i < 100; ++i) {
+//     std::cout << get_random_str() << std::endl;
+//   }
   return 0;
 }
 
