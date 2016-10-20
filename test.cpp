@@ -1,4 +1,4 @@
-#define TEST67
+#define TEST65
 
 #ifdef TEST67
 #define TEST67_TAG "template's all arguments all with default value"
@@ -117,8 +117,10 @@ int main(int argc, char** argv) {
   for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
   std::cout << std::endl << testDescription << std::endl;
   int a = 100;
-//   std::shared_ptr<int> pa = std::make_shared<int>(new int());
-//   std::unique_ptr<int> pb(new int());
+  std::shared_ptr<int> pa;// = std::make_shared<int>(new int());
+  pa.reset(new int());
+  *pa = 1000;
+  std::cout << *pa << std::endl;
   return 0;
 }
 #endif // TEST64
