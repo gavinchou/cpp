@@ -1,4 +1,935 @@
-#define TEST51
+#define TEST67
+
+#ifdef TEST67
+#define TEST67_TAG "template's all arguments all with default value"
+const char* testDescription = "TEST67 2016-10-20-Thu 13:41:18 " TEST67_TAG;
+#include <iostream>
+
+template <typename A, typename B = double>
+class C {
+public:
+  A a;
+  B b;
+};
+
+// template <>
+// class C : public C<int>{
+// };
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << std::endl << testDescription << std::endl;
+  C<int> c;
+  return 0;
+}
+#endif // TEST67
+
+#ifdef TEST66
+#define TEST66_TAG "linux signal sigaction test"
+const char* testDescription = "TEST66 2016-10-19-Wed 11:34:38 " TEST66_TAG;
+#include <iostream>
+#include <thread>
+#include <chrono>
+// #include <signal.h>
+
+//using namespace std;
+// bool g_quit = false;
+// void signal_handler(int signal) {
+//   std::cout  << "signal(" << signal << ") caught";
+//   g_quit = true;
+//   A::quit = true;
+//   A::get_instance()->stop();
+// }
+
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
+ 
+static void hdl (int sig, siginfo_t *siginfo, void *context) {
+  printf ("Sending PID: %ld, UID: %ld\n",
+      (long)siginfo->si_pid, (long)siginfo->si_uid);
+  std::cout << "Signal num: " << siginfo->si_signo << std::endl;
+  std::cout << reinterpret_cast<std::string*>(context)->data() << std::endl;
+}
+ 
+class A {
+public:
+  static bool quit;// = false;
+  void run() {
+    signal(SIGINT, A::signal_handler);
+    signal(SIGTERM, A::signal_handler);
+    int i = 0;
+    while (!quit) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::cout << "test " << i++ << std::endl;
+    }
+  }
+  static void signal_handler(int signal) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::cout  << "signal(" << signal << ") caught" << std::endl;;
+    quit = true;
+  }
+};
+
+bool A::quit = false;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+//   A a;
+//   a.run();
+
+  struct sigaction act;
+  memset (&act, '\0', sizeof(act));
+  /* Use the sa_sigaction field because the handles has two additional parameters */
+  act.sa_sigaction = &hdl;
+  /* The SA_SIGINFO flag tells sigaction() to use the sa_sigaction field, not sa_handler. */
+  act.sa_flags = SA_SIGINFO;
+  std::string ctx = "signal context";
+  if (sigaction(SIGTERM, &act, reinterpret_cast<void*>(&ctx)) < 0) {
+    perror ("sigaction");
+    return 1;
+  }
+
+  while (1) {
+    sleep (10);
+  }
+
+  return 0;
+}
+#endif // TEST66
+
+#ifdef TEST65
+#define TEST65_TAG "smart pointer, shared/unique/weak pointer"
+const char* testDescription = "TEST65 2016-10-17-Mon 11:28:46 " TEST65_TAG;
+#include <iostream>
+#include <memory>
+
+#include <string>
+#include <ctime>
+#include <sstream>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  int a = 100;
+//   std::shared_ptr<int> pa = std::make_shared<int>(new int());
+//   std::unique_ptr<int> pb(new int());
+  return 0;
+}
+#endif // TEST64
+
+#ifdef TEST64
+#define TEST64_TAG "string resize test --- resize will not trigger reallocation"
+const char* testDescription = "TEST64 2016-10-17-Mon 11:28:46 " TEST64_TAG;
+#include <iostream>
+#include <string>
+#include <typeinfo>
+#include <iomanip>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::string str1 = "abc";
+  std::cout << typeid(std::string::pointer).name() << std::endl;
+
+  std::ios::fmtflags fmt_falgs(std::cout.flags());
+
+  std::cout << std::hex << reinterpret_cast<int64_t>(&str1[0]) << std::endl;
+  std::cout << std::hex << reinterpret_cast<int64_t>(str1.c_str()) << std::endl;
+  auto pstr1 = &str1;
+  std::cout << std::hex << reinterpret_cast<int64_t>(&(*pstr1)[0]) << std::endl;
+  str1.resize(1024 * 1024 * 10, 0);
+  str1.reserve(1024 * 1024 * 10 + 1);
+
+  std::cout << std::hex << reinterpret_cast<int64_t>(&(*pstr1)[0]) << std::endl;
+  str1.clear();
+  std::cout.flags(fmt_falgs);
+  std::cout << "cap: " << str1.capacity() << std::endl;
+  str1.resize(1, 0);
+  std::cout << "cap: " << str1.capacity() << std::endl;
+
+
+  return 0;
+}
+#endif // TEST64
+
+#ifdef TEST63
+#define TEST63_TAG "pointer for each test"
+const char* testDescription = "TEST63 2016-10-17-Mon 11:24:38 " TEST63_TAG;
+#include <iostream>
+#include <vector>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << std::endl << testDescription << std::endl;
+  std::vector<int> v = {1, 2, 4, 5};
+  auto pv = &v;
+  for (const auto& it : *pv) {
+    std::cout << it << std::endl;
+  }
+
+  return 0;
+}
+#endif // TEST63
+
+#ifdef TEST62
+#define TEST62_TAG "key word const test"
+const char* testDescription = "TEST62 2016-10-17-Mon 10:56:51 " TEST62_TAG;
+#include <iostream>
+#include <string>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << std::endl << testDescription << std::endl;
+  int a = 10;
+  int b= 100;
+
+  const int* p1 = &a; // pointer points to read-only variable
+  int const * p2 = &a; // pointer points to read-only variable
+
+  int* const p3 = &a; // pointer is read-only, cannot be changed
+  const int* const p4 = &a; // both pointer itself and the value it points to is read-only
+
+  std::cout << "p1: " << *p1 << std::endl;
+//   ++(*p1); // read-only variable is not assignable
+//   p1 = &b; // will compile
+  std::cout << "p2: " << *p2 << std::endl;
+//   ++(*p2); // read-only variable is not assignable
+//   p2 = &b; // will compile
+
+  std::cout << "p3: " << *p3 << std::endl;
+//   ++(*p3); // will compile
+//   p3 = &b; // cannot assign to variable 'p3' with const-qualified type 'int *const'
+  std::cout << "p4: " << *p4 << std::endl;
+//   ++(*p4); // read-only variable is not assignable
+
+  return 0;
+}
+#endif // TEST62
+
+#ifdef TEST61
+#define TEST61_TAG "stream string hex, std::hex test"
+const char* testDescription = "TEST61 2016-10-13-Thu 21:32:12 " TEST61_TAG;
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::string str = "\r\n";
+  str.push_back(-1);
+  std::stringstream ss;
+  for (const char& i : str) {
+    std::cout << static_cast<int>(i) << std::endl;
+    ss << std::setw(2) << std::setfill('0') << std::hex << static_cast<short>(i & 0xff);
+  }
+  std::cout << ss.str() << std::endl;
+  std::cout << "test" << 1 << std::endl;
+
+//   std::cout << std::hex << str.data() << "test" << std::endl;
+//   int i = 0;
+//   std::cout << i++ << i++ << "test" << i++ << std::endl;
+
+  return 0;
+}
+#endif // TEST61
+
+#ifdef TEST60
+#define TEST60_TAG "timestamp test"
+const char* testDescription = "TEST60 2016-10-10-Mon 20:52:57 " TEST60_TAG;
+#include <iostream>
+#include <chrono>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  using namespace std::chrono;
+  milliseconds ms = duration_cast<milliseconds>(
+      system_clock::now().time_since_epoch()
+  );
+  std::cout << ms.count() / 1000 << std::endl;
+  return 0;
+}
+#endif // TEST60
+
+#ifdef TEST59
+#define TEST59_TAG "fstream test"
+const char* testDescription = "TEST59 2016-10-10-Mon 19:44:02 " TEST59_TAG;
+#include <iostream>
+#include <fstream>
+#include <string>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::ifstream ifs("/Users/gavin/tmp/tmp1.md", std::fstream::binary);
+  std::string str;
+  std::string buf_str;
+  char buf[1024];
+  int total_count = 0;
+  int count = 0;
+  while (ifs) {
+    ifs.read(buf, sizeof(buf));
+    int read_count = ifs.gcount();
+    if (read_count > 0) {
+      total_count += read_count;
+      str.append({buf, static_cast<size_t>(read_count)});
+    }
+    ++count;
+  }
+  std::cout << str << std::endl;
+  std::cout << total_count << std::endl;
+  std::cout << count << std::endl;
+  return 0;
+}
+#endif // TEST59
+
+#ifdef TEST58
+#define TEST58_TAG "hex str to bytes/string"
+const char* testDescription = "TEST58 2016-09-27-Tue 18:49:11 " TEST58_TAG;
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <sstream>
+#include <vector>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::string str = "E4B8ADe59bbde4baba";
+  std::unordered_map<char, char> table = {
+      {'0', 0}, {'1', 1}, {'2', 2}, {'3', 3}, {'4', 4},
+      {'5', 5}, {'6', 6}, {'7', 7}, {'8', 8}, {'9', 9},
+      {'a', 10}, {'b', 11}, {'c', 12}, {'d', 13}, {'e', 14}, {'f', 15},
+      {'A', 10}, {'B', 11}, {'C', 12}, {'D', 13}, {'E', 14}, {'F', 15}
+  };
+
+  char* buf = new char[str.length() / 2 + 1];
+  buf[str.length() / 2] = 0;
+  for (int i = 0; i < str.length(); ++i) {
+    std::cout << str[i];
+    if (i & 0x01) {
+      // higher bits
+      buf[i >> 1] |= (table[str[i]] & 0x0f);
+      std::cout << " " << buf[i >> 1] << std::endl;
+    } else {
+      // lower bits
+      buf[i >> 1] = (table[str[i]] & 0x0f) << 4;
+    }
+  }
+
+//   std::string str1 = buf;
+  std::cout << buf << std::endl;
+
+  delete buf;
+  return 0;
+}
+#endif // TEST58
+
+#ifdef TEST57
+#define TEST57_TAG "str lowbound compare"
+const char* testDescription = "TEST57 2016-09-23-Fri 16:59:47 " TEST57_TAG;
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+//using namespace std;
+
+void lambda1() {
+//   std::vector<std::string>::iterator last_it;
+//   bool matched = false;
+//   for (int i = 0; i < object.length(); ++i) {
+//     last_it = std::lower_bound(prefixes.begin(), prefixes.end(), object.substr(0, i + 1),
+//         [i, matched](const std::string& a, const std::string& b) mutable -> int {
+//           std::cout << a << " " << b << std::endl;
+//           if (a.length() < (i + 1) || a[i] < b[i]) {
+//             return -1;
+//           } else if (a[i] == b[i]) {
+//             if (a.length() == (i + 1)) {
+//               matched = true;
+//             }
+//             return 0;
+//           } else {
+//             return 1;
+//           }
+//         }
+//     );
+//     if (last_it == prefixes.end() || matched) {
+//       // no more to be found or matched
+//       break;
+//     }
+//   }
+
+//   if (matched || last_it != prefixes.end()) {
+//     std::cout << "match: " << *last_it << std::endl;
+//   } else {
+//     std::cout << "no match" << std::endl;
+//   }
+}
+
+// void distribute(std::vector<std::string> prefixes, std::string object) {
+//   int i = 0;
+//   int j = 0;
+//   for (; i < object.length(); ++i) {
+//     for (; i < prefixes.size();) {
+//     }
+//   }
+// }
+
+int gaojia(const std::vector<std::string>& prefixes, const std::string& object) {
+
+//   auto it = std::lower_bound(prefixes.begin(), prefixes.end(), object);
+  auto it = std::lower_bound(prefixes.rbegin(), prefixes.rend(), object);
+
+//   if (it == prefixes.end()) {
+  if (it == prefixes.rend()) {
+    // no lower bound found
+    std::cout << "no lower bound found" << std::endl;
+    return 0;
+  }
+
+  auto starts_with = [](const std::string& str, const std::string& pre) -> bool {
+    if (str.length() < pre.length()) {
+      return false;
+    } else if (str.compare(0, pre.length(), pre) == 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  bool matched = false;
+
+  // if string starts with the found prefix
+  if (starts_with(object, *it)) {
+    std::cout << "first match" << std::endl;
+    matched = true;
+  }
+
+//   if (!matched && it != prefixes.begin()) {
+  if (!matched && it != prefixes.rbegin()) {
+    --it; // try to match the previous prefix
+    if (starts_with(object, *it)) {
+      std::cout << "second match" << std::endl;
+      matched = true;
+    }
+  }
+  if (matched) {
+    std::cout << "matched prefix: " << *it << std::endl;
+  } else {
+    std::cout << "no prefix matched" << std::endl;
+  }
+  return 0;
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::vector<std::string> prefixes = {"str1", "stra", "strb", "strc", "strx", "strz"};
+  std::sort(prefixes.begin(), prefixes.end());
+  std::string object = "strb/acd";
+  gaojia(prefixes, object);
+  return 0;
+}
+#endif // TEST57
+
+
+#ifdef TEST56
+#define TEST56_TAG "regex test"
+const char* testDescription = "TEST56 2016-09-22-Thu 12:41:10 " TEST56_TAG;
+#include <iostream>
+#include <string>
+#include <regex>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+
+  // expression
+//   std::string s(" $( lastModified)+ P7D");
+
+  // absolute time
+  std::string s(" 2016-09-22T12:58:41Z ");
+
+  // mixe 2 kinds of time format
+//   std::string s(" $( lastModified)+ P7D 2016-09-22T12:58:41Z");
+//   std::string s(" 2016-09-22T12:58:41Z  $( lastModified)+ P7D");
+
+  // multiple lines
+//   std::string s(" 2016-09-22T12:58:41Z  \n$( lastModified)+ P7D");
+
+  // invalid time format
+//   std::string s("fds 2016-09-22T12:58:41Z  $( lastModified)+ P7D akjl");
+
+  // empty string
+//   std::string s("");
+
+  // blank string
+//   std::string s("  \t");
+
+  std::smatch m;
+  std::string regex_str = R"((^\s*\$\(\s*([^\s]+)\s*\)\s*([+-])\s*P(\d+)([DMYHm])\s*$)|(^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s*$))";
+  std::regex e(regex_str);
+
+  std::cout << "Target sequence: " << s << std::endl;
+  std::cout << "Regex: " << regex_str << std::endl;
+
+  if (std::regex_search(s, m, e)) {
+    // the number of match group is the same as number of pairs of parenthesis
+    // match group sequence is the same as the apparence of (
+    // m[0] is the whole string which matches the pattern
+    std::cout << "The following matches and submatches were found:" << std::endl;
+    for (int i = 0; i < m.size(); ++i) {
+      std::cout << "m[" << i << "]: " << m[i] << std::endl;
+    }
+    std::cout << std::endl;
+    if (m[1] != "" && m[6] == "") {
+      std::cout << "time expression: " << m[1] << std::endl;
+      std::cout << "expresstion variable: " << m[2] << std::endl;
+      std::cout << "expresstion oprator: " << m[3] << std::endl;
+      std::cout << "expresstion right oprand: " << m[4] << std::endl;
+      std::cout << "expresstion time gap unit: " << m[5] << std::endl;
+    } else if (m[6] != "" && m[1] == "") {
+      std::cout << "absolute time: " << m[6] << std::endl;
+    } else {
+      std::cout << "some format matched but it is invalid expresstion" << std::endl;
+    }
+  } else {
+      std::cout << "no time format matched, invalid expresstion" << std::endl;
+  }
+
+  return 0;
+}
+#endif // TEST56
+
+#ifdef TEST55
+#define TEST55_TAG "test sprintf"
+const char* testDescription = "TEST55 2016-09-19-Mon 17:49:01 " TEST55_TAG;
+#include <iostream>
+#include <cstdio>
+#include <cstdarg>
+#include <map>
+
+void print(int code, ...) {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+  va_list ap;
+  va_start(ap, code);
+  for (auto& i : ap) {
+//     std::cout << typeid(i).name() << std::endl;
+//     std::cout << i;
+  }
+  va_end(ap);
+}
+
+#define set_err_msg(buf, buf_size, fmt, ...) snprintf(buf, buf_size, fmt, ##__VA_ARGS__)
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::map<int, const char*> m;
+  m[404] = "bucket %s, object %s, not found";
+  m[409] = "bucket %s, object %s, count %d, not found";
+  char buf[10240];
+  memset(buf, 0, 10240);
+  set_err_msg(buf, sizeof(buf), m[404], "bucket===", "object===");
+  std::cout << buf << std::endl;
+  memset(buf, 0, 10240);
+  set_err_msg(buf, sizeof(buf), m[409], "bucket===", "object===", 12345);
+  std::cout << buf << std::endl;
+
+  return 0;
+}
+#endif // TEST55
+
+#ifdef TEST54
+#define TEST54_TAG "tuple iteration"
+const char* testDescription = "TEST54 2016-09-18-Sun 21:45:21 " TEST54_TAG;
+#include <iostream>
+#include <tuple>
+#include <utility>
+
+// template<std::size_t I = 0, typename FuncT, typename... Tp>
+// inline typename std::enable_if<I == sizeof...(Tp), void>::type for_each(
+//   std::tuple<Tp...> &, FuncT) { // Unused arguments are given no names.
+// }
+// 
+// template<std::size_t I = 0, typename FuncT, typename... Tp>
+// inline typename std::enable_if<I < sizeof...(Tp), void>::type for_each(
+//   std::tuple<Tp...>& t, FuncT f) {
+//   f(std::get<I>(t));
+//   for_each<I + 1, FuncT, Tp...>(t, f);
+// }
+// 
+// template<typename T>
+// void f(T t) {
+//   std::cout << t << " ";
+// }
+// 
+// int main(int argc, char** argv) {
+//   std::cout << "argc: " << argc << std::endl;
+//   for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+//   std::cout << std::endl << testDescription << std::endl;
+// 
+//   auto args = std::make_tuple(1, "bbb", 1.0);
+//   for_each(args, f);
+//   return 0;
+// }
+
+template<std::size_t I = 0, typename... Tp>
+inline typename std::enable_if<I == sizeof...(Tp), void>::type print(
+    int, std::tuple<Tp...>&) { // template convergence
+}
+
+template<std::size_t I = 0, typename... Tp>
+inline typename std::enable_if<I < sizeof...(Tp), void>::type print(
+    int i, std::tuple<Tp...>& t) {
+  std::cout << std::get<I>(t) << std::endl;
+  print<I + 1, Tp...>(i, t);
+}
+
+int main() {
+  typedef std::tuple<int, float, double> T;
+  T t = std::make_tuple(2, 3.14159F, 2345.678);
+  auto b = std::make_tuple(2, 3.14159F, 2345.678);
+  print(1, b);
+}
+
+#endif // TEST54
+
+#ifdef TEST53
+#define TEST53_TAG "tuple as input parameter test"
+const char* testDescription = "TEST53 2016-09-18-Sun 20:24:10 " TEST53_TAG;
+#include <iostream>
+#include <tuple>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <iomanip>
+
+template<std::size_t I = 0, typename... Tp>
+typename std::enable_if<I == sizeof...(Tp), std::string>::type set_err_msg(
+    int, const std::tuple<Tp...>&) { // for template's convergence
+//   std::stringstream ss;
+//   ss << std::endl;
+//   return ss.str();
+  return "";
+}
+
+/**
+ * remove all types' const volatile modifiers, return the most basic type name
+ */
+template<typename T>
+using decay_t = typename std::conditional<std::is_pointer<T>::value,
+    std::decay<
+      typename std::add_pointer<
+        typename std::remove_cv<
+          typename std::remove_pointer<T>::type
+        >::type
+      >::type>,
+    std::decay<typename std::remove_cv<T>::type>
+  >::type;
+
+/**
+ * compare 2 types ignoring modifiers: const, reference
+ */
+template<typename A, typename B>
+struct is_same_type {
+  static constexpr bool value = std::is_same<typename decay_t<A>::type, B>::value;
+};
+
+// vararg template types must be placed at the end
+template<std::size_t I = 0, typename... Tp> 
+typename std::enable_if<I < sizeof...(Tp), std::string>::type set_err_msg(
+    int code, const std::tuple<Tp...>&& tp) {
+
+  std::stringstream ss;
+  if (I == 0) {
+    ss << std::to_string(code) << " ";
+    std::cout << code << " " << std::endl;;
+  }
+
+  auto e = std::get<I>(tp);
+  // can be implemented with tuple and function template
+  if (is_same_type<decltype(e), int>::value
+      || is_same_type<decltype(e), unsigned int>::value
+      || is_same_type<decltype(e), float>::value
+      || is_same_type<decltype(e), double>::value
+      || is_same_type<decltype(e), long>::value
+      || is_same_type<decltype(e), unsigned long>::value
+      || is_same_type<decltype(e), long long>::value
+      || is_same_type<decltype(e), unsigned long long>::value
+      || is_same_type<decltype(e), long double>::value
+      ) {
+    // numbers
+    ss << std::setprecision(5) << e << " ";
+    std::cout << "===================" << e << " typeid: " << typeid(e).name() <<  std::endl;
+  } else if (
+      is_same_type<decltype(e), std::string>::value
+      || is_same_type<decltype(e), char>::value
+      || is_same_type<decltype(e), char*>::value
+      ) {
+    // strings
+    ss << e << " ";
+  } else {
+    // other types not supported
+    throw std::invalid_argument("invalid_argument");
+  }
+  std::cout << e << std::endl;
+  ss << set_err_msg<I + 1, Tp...>(code, std::forward<decltype(tp)>(tp));
+  return ss.str();
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+
+  auto args = std::make_tuple(100.01, 100.100f, "abb", 1123, "bbb", std::string("std string"));
+  auto res = set_err_msg(1000, std::forward<decltype(args)>(args));
+  std::cout << res << std::endl;
+  // wrong invokation
+  set_err_msg(10086, std::make_tuple(100.100f, "abb", 1123, "bbb"));
+  set_err_msg(10086, std::forward_as_tuple(100.100f, "abb", 1123, "bbb"));
+
+//   std::cout << std::boolalpha
+//     << std::is_same<typename std::decay<decltype("")>::type, char[]>::value
+//     << std::endl
+//     << std::is_same<typename std::decay<decltype("")>::type, char*>::value
+//     << std::endl
+//     << std::is_same<typename std::decay<decltype("")>::type, const char*>::value
+//     << std::endl;
+
+//   auto e = std::get<1>(args);
+//   std::cout << std::boolalpha
+//       << is_same_type<decltype(e), int>::value << std::endl
+//       << is_same_type<decltype(e), unsigned int>::value << std::endl
+//       << is_same_type<decltype(e), float>::value << std::endl
+//       << is_same_type<decltype(e), double>::value << std::endl
+//       << is_same_type<decltype(e), long>::value << std::endl
+//       << is_same_type<decltype(e), unsigned long>::value << std::endl
+//       << is_same_type<decltype(e), long long>::value << std::endl
+//       << is_same_type<decltype(e), unsigned long long>::value << std::endl
+//       << is_same_type<decltype(e), long double>::value << std::endl
+//       << is_same_type<decltype(e), char*>::value << std::endl
+//       << is_same_type<decltype(e), const char*>::value << std::endl
+//       << is_same_type<decltype(e), const char>::value << std::endl
+//       << is_same_type<decltype(e), char>::value << std::endl
+//       << std::is_same<typename std::remove_const<std::remove_pointer<const char*>::type>::type, char>::value << std::endl
+//       << std::is_same<typename std::remove_all_extents<const char*>::type, char*>::value << std::endl
+//       << std::is_same<typename std::decay<const int>::type, int>::value << std::endl
+//       << std::is_same<typename std::decay<const char>::type, char>::value << std::endl
+//       << typeid(std::remove_pointer<std::add_pointer<char>::type>::type).name() << std::endl
+//       << std::endl;
+  return 0;
+}
+#endif // TEST53
+
+#ifdef TEST52
+#define TEST52_TAG "map trie"
+const char* testDescription = "TEST52 2016-09-18-Sun 11:06:08 " TEST52_TAG;
+#include <iostream>
+#include <map>
+#include <vector>
+#include <stack>
+#include <set>
+
+std::string hex_str(const std::string& str) {
+  std::string res = "";
+  res.reserve(str.length() * 2);
+  const char* table = "0123456789ABCDEF";
+  for (const char& i : str) {
+    res.push_back(table[(i & 0xf0) >> 4]);
+    res.push_back(table[i & 0x0f]);
+  }
+  return res;
+}
+std::string hex_str(const char& c) {
+  return hex_str(std::string() + c);
+//     return hex_str(std::string(*const_cast<char*>(&c)));
+}
+
+// map trie can save a lot of space
+
+/**
+ * node of trie, the given data type
+ */
+template<typename T>
+struct Node {
+  std::map<char, Node*> e; // edge
+  bool is_end;
+  T data;
+  int color;
+};
+
+/**
+ * 
+ */
+template<typename T>
+class MapTrie {
+public:
+  typedef Node<T> NodeType;
+  NodeType root;
+  size_t size;
+  MapTrie() {
+    // empty string is always contained by a trie
+    root.is_end = true;
+    size = 1;
+  }
+
+  void insert(const std::string& str) {
+    auto cursor = &root;
+    for (const char& i : str) {
+      if (cursor->e.find(i) == cursor->e.end()) { // save time
+//       if (cursor->e[i] == nullptr) { // save space
+        cursor->e[i] = new NodeType();
+        cursor->e[i]->is_end = false;
+        ++size;
+        std::cout << "new edge/node: " << hex_str(i) << std::endl;
+      } else {
+        std::cout << "existed edge/node: " << hex_str(i) << std::endl;
+      }
+      cursor = cursor->e[i];
+    }
+    cursor->is_end = true;
+  }
+
+  /**
+   * check if the given string matched in the trie
+   * default match prefix only
+   */
+  bool check(const std::string& str, bool prefix_only = true) {
+    auto prefix_node = get_prefix_node(str);
+    if (prefix_node == nullptr) {
+      return false;
+    } else {
+      return prefix_only ? true : prefix_node->is_end;
+    }
+  }
+
+  const NodeType* get_prefix_node(const std::string& prefix) {
+    auto cursor = &root;
+    for (const char& i : prefix) {
+      // no such edge
+      if (cursor->e.find(i) == cursor->e.end()) { // save space
+//       if (cursor->e[i] == nullptr) { // save time
+        std::cout << "no edge: " << hex_str(i) << std::endl;
+        cursor = nullptr;
+        break;
+      } else {
+        std::cout << "edge: " << hex_str(i) << std::endl;
+        cursor = cursor->e[i];
+      }
+    }
+    return cursor;
+  }
+
+  void remove(const std::string& str) {
+  }
+
+  void walk(std::function<void(NodeType)> f, int walk_type = 0) {
+    auto cursor = &root;
+    if (walk_type == 0) {
+      std::stack<decltype(cursor)> stk;
+      std::set<decltype(cursor)> dfs_set;
+      stk.push(cursor);
+      dfs_set.insert(cursor);
+      while (stk.size() > 0) {
+        std::cout << "stk.size " << stk.size() << std::endl;
+        cursor = stk.top();
+        auto it = cursor->e.begin();
+        while (true) { // for each adj(cursor)
+          if (it != cursor->e.end()) {
+            auto tmp = cursor->e.begin()->second;
+            if (tmp != nullptr) {
+              auto insert_res = dfs_set.insert(tmp);
+              if (insert_res.second) {
+                stk.push(tmp);
+                cursor = tmp;
+                it = cursor->e.begin();
+              } else {
+                ++it;
+              }
+            } else {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+        auto tmp = stk.top();
+        f(*tmp);
+        stk.pop();
+        dfs_set.insert(tmp);
+      }
+    }
+  }
+
+
+  ~MapTrie() {
+  }
+
+};
+
+void walk(MapTrie<std::string>::NodeType* root) {
+  root->color = 1;
+  for (auto& i : root->e) {
+    if (i.second != nullptr && i.second->color == 0) {
+      walk(i.second);
+    }
+  }
+  root->color = 2;
+  std::cout << root << std::endl;
+}
+
+int main(int argc, char* argv[]) {
+  std::cout << "argc: " << argc << std::endl;
+  for (int i = 0; i < argc; ++i) {
+    std::cout << argv[i] << " ";
+  }
+  std::cout << std::endl << testDescription << std::endl;
+  std::vector<std::string> v= {"", "\0", "abc", "abcd", "中国", "中国人", "example string"};
+  MapTrie<std::string> trie;
+  for (const auto& i : v) {
+    std::cout << "insert: " << i << std::endl;
+    trie.insert(i);
+  }
+  v.push_back("a b c");
+  v.push_back("ab");
+  for (const auto& i : v) {
+    std::cout << i << std::endl << trie.check(i) << std::endl;
+  }
+
+//   trie.walk([](MapTrie<std::string>::NodeType node) {
+//       if (node.e.begin() != node.e.end()) {
+//         std::cout << hex_str(node.e.begin()->first) << std::endl;
+//       }
+//       std::cout << "xxxxxxxxxxxxxxxxx" << std::endl;
+//   });
+  walk(&(trie.root));
+  std::cout << trie.size << std::endl;
+  return 0;
+}
+#endif // TEST52
 
 #ifdef TEST51
 #define TEST51_TAG "struct default move constructor"
@@ -124,7 +1055,7 @@ int main(int argc, char** argv) {
 #endif // TEST50
 
 #ifdef TEST49
-#define TEST49_TAG "map init list"
+#define TEST49_TAG "map init list, enum as map's input class"
 const char* testDescription = "TEST49 2016-09-12-Mon 20:16:43 " TEST49_TAG;
 #include <iostream>
 #include <map>
@@ -136,7 +1067,8 @@ enum E {
   B,
   C,
 };
-std::map<int, std::string> get_err_msg_map() {
+
+std::map<E, std::string> get_err_msg_map() {
 //   std::map<int, std::string> m = {
 //     {E::A, "yangzhijia"},
 //     {E::B, "zhoufei"},
@@ -145,6 +1077,7 @@ std::map<int, std::string> get_err_msg_map() {
   return {
     {E::A, "yangzhijia"},
     {E::B, "zhoufei"},
+    {E::C, "test"},
   };
 }
 
@@ -1197,9 +2130,7 @@ const char* testDescription = "TEST22 2015-11-19-Thu 15:30:34 " TEST22_TAG;
 //using namespace std;
 
 int main(int argc, char** argv) {
-  for (int i = 1; i < argc; ++i) {
-    std::cout << argv[i] << std::endl;
-  }
+  for (int i = 1; i < argc; ++i) { std::cout << argv[i] << std::endl; }
   std::cout << testDescription << std::endl;
   time_t cur_time = time(NULL);
   if(cur_time < 0) {
@@ -1222,6 +2153,29 @@ int main(int argc, char** argv) {
   printf("UTC = %s", asctime(&utc_tm));
   printf("LOC = %s", asctime(&local_tm));
   printf("LOC = %s", ctime(&cur_time));
+
+// #include <chrono> // system clock
+// #include <ctime> // std::gmtime, std::mktime, std::strftime, ::strptime
+// 
+// using namspace std::chrono
+// int64_t ts = duration_cast<seconds>(system_clock()).count();
+// 
+// std::time_t epoch = std::time(nullptr); // timestamp from time()
+// epoch = static_cast<time_t>(ts); // convert from system clock
+// 
+// std::tm* utc_tm = std::gmtime(epoch); // epoch to tm, greenwich mean time, utc
+// std::tm* local_tm = std::localtime(time_t);
+// 
+// std::time_t epoch_a = std::mktime(utc_tm); // get epoch from tm
+// std::time_t epoch_b = std::mktime(local_tm); // get epoch from tm
+// 
+// float time_zone = (epoch_b - epoch_a) / 3600.0f;
+// 
+// // conversion
+// // format a tm
+// size_t sz = std::strftime(buf, max_size, time_fmt, ptm);
+// char* p_1st_char_not_processed = ::strptime(time_string, time_fmt, ptm); // not in std lib, a posix interface
+
   return 0;
 }
 #endif // TEST22
