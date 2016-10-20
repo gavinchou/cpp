@@ -3006,4 +3006,401 @@ int main(int argc, char** argv) {
 
 #endif // TEST1
 
+#ifdef linux_TEST64
+#define linux_TEST64_TAG "std::string resize/capacity test"
+const char* testDescription = "linux_TEST64 2016-10-17-Mon 11:28:46 " linux_TEST64_TAG;
+#include <iostream>
+#include <string>
+#include <typeinfo>
+#include <iomanip>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::string str1 = "abc";
+  std::cout << typeid(std::string::pointer).name() << std::endl;
+
+  std::ios::fmtflags fmt_falgs(std::cout.flags());
+
+  std::cout << std::hex << reinterpret_cast<int64_t>(&str1[0]) << std::endl;
+  std::cout << std::hex << reinterpret_cast<int64_t>(str1.c_str()) << std::endl;
+  auto pstr1 = &str1;
+  std::cout << std::hex << reinterpret_cast<int64_t>(&(*pstr1)[0]) << std::endl;
+  str1.resize(1024 * 1024 * 10, 0);
+  str1.reserve(1024 * 1024 * 10 + 1);
+
+  std::cout << std::hex << reinterpret_cast<int64_t>(&(*pstr1)[0]) << std::endl;
+  str1.clear();
+  std::cout.flags(fmt_falgs);
+  std::cout << "cap: " << str1.capacity() << std::endl;
+  str1.resize(1, 0);
+  std::cout << "cap: " << str1.capacity() << std::endl;
+  str1.resize(1024 * 1024 * 10 + 1, 0);
+  std::cout << "cap: " << str1.capacity() << std::endl;
+
+
+  return 0;
+}
+#endif // linux_TEST64
+
+
+#ifdef linux_TEST29
+#define linux_TEST29_TAG "test yang"
+const char* testDescription = "linux_TEST46 2016-08-17-Wed 20:30:21 " linux_TEST29_TAG;
+#include <vector>
+#include <iostream>
+
+using namespace std;
+struct Stat {
+    Stat() {
+        std::cout << "contruct\n";
+    }
+    Stat& operator=(const Stat& oth) {
+        id = oth.id;
+        used = oth.used;
+        count = oth.count;
+        std::cout << id << " assign\n";
+        return *this;
+    }
+    Stat(const int& i, const int& u, const int& cnt) {
+        id = i;
+        used = u;
+        count = cnt;
+        std::cout << id<< "construct2\n";
+    }
+
+    /*
+    Stat(Stat&& oth) {
+        id = oth.id;
+        used = oth.used;
+        count = oth.count;
+        std::cout << id<< "move construct\n";
+    }
+*/
+    Stat(const Stat& oth) {
+        id = oth.id;
+        used = oth.used;
+        count = oth.count;
+        std::cout << id<< "copied\n";
+    }
+/*
+    Stat& operator=(Stat&& oth) {
+        id = oth.id;
+        used = oth.used;
+        count = oth.count;
+        std::cout << id<< "move assign\n";
+        return *this;
+    }
+    */
+    int id = 0;
+    int used = 0;
+    int count = 0;
+
+//     int id;
+//     int used;
+//     int count;
+};
+
+int main() {
+    vector<Stat> vec;
+
+    Stat st;
+    Stat st2;
+    st2.id = 2;
+    Stat st3;
+    st3.id = 3;
+    Stat st4;
+
+    vec.reserve(16);
+    cout << "========vector push back===========\n";
+    vec.push_back(st2);
+
+    cout << "========vector insert===========\n";
+    vec.insert(vec.begin(),  st3);
+}
+#endif // linux_TEST46
+
+#ifdef linux_TEST28
+#define linux_TEST28_TAG ""
+const char* testDescription = "linux_TEST28 2016-07-15-Fri 18:03:51 " linux_TEST28_TAG;
+#include <iostream>
+#include <cstdio>
+#include <functional>
+
+//using namespace std;
+
+
+//template <typename ReturnType>
+//ReturnType do_until(ReturnType(*job)(),
+//                    bool(*judge)(ReturnType),
+//                    int times = 10) {
+//    int i = 0;
+//    do {
+//        ReturnType ret = job();
+//
+//        if (judge(ret)) {
+//            return ret;
+//        }
+//        printf("failed\n");
+//        i++;
+//    } while (i < times);
+//}
+
+template <typename ReturnType>
+ReturnType do_until_base(std::function<ReturnType()> job,
+                        std::function<bool(ReturnType)> judge,
+                        int times = 10) {
+    int i = 0;
+    do {
+        ReturnType ret = job();
+        if (judge(ret)) {
+            return ret;
+        }
+        printf("failed\n");
+        i++;
+    } while (i < times);
+}
+
+template <typename ReturnType>
+ReturnType do_until(ReturnType(*job)(),
+                    bool(*judge)(ReturnType),
+                    int times = 10) {
+    return do_until_base<ReturnType>(job, judge, times);
+}
+template <typename ReturnType, typename ClassType>
+ReturnType do_until(ReturnType(ClassType::* job)(),
+                    bool(*judge)(ReturnType),
+                    int times = 10) {
+    return do_until_base<ReturnType>(job, judge, times);
+}
+
+int test() {
+    return -1;
+}
+
+bool judge(int ret) {
+    return ret == 0;
+}
+
+struct aaa {
+  int test() {
+    return -1;
+  }
+};
+
+int main(int argc, char *argv[]) {
+  std::cout << testDescription << std::endl;
+    auto test1 = [](){return -1;};
+    do_until(a::test, judge);
+    return 0;
+}
+
+#endif // linux_TEST28
+
+std::string binary_to_hex_string(const char* binary, size_t length,
+    bool is_upper = true) {
+  const char* const lut = "0123456789ABCDEF";
+  std::string ret = "";
+  for (size_t i = 0; i < length; ++i) {
+    ret.push_back(lut[binary[i] >> 4]);
+    ret.push_back(lut[binary[i] & 0xf]);
+  }
+  ret += "";
+  return ret;
+}
+
+#ifdef linux_TEST25
+#define linux_TEST25_TAG "test memory address"
+const char* testDescription = "linux_TEST25 2016-04-08-Fri 11:03:15 " linux_TEST25_TAG;
+#include <iostream>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << testDescription << std::endl;
+  char a;
+  char b;
+  int c;
+
+  //   printf("%ld\n", &a);
+  //   printf("%ld\n", &b);
+  //   printf("%ld\n", &c);
+  //   std::cout << (&a) << std::endl;
+  std::cout << reinterpret_cast<long>(&a) << std::endl;
+  std::cout << reinterpret_cast<long>(&b) << std::endl;
+  std::cout << reinterpret_cast<long>(&c) << std::endl;
+
+  return 0;
+}
+#endif // linux_TEST25
+
+
+#ifdef linux_TEST24
+#define linux_TEST24_TAG "md5"
+const char* testDescription = "linux_TEST24 2016-02-04-Thu 11:05:44 " linux_TEST24_TAG;
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <openssl/md5.h>
+
+int main()
+{
+  unsigned char digest[MD5_DIGEST_LENGTH];
+  char string[] = "happy";
+
+  MD5((unsigned char*)&string, strlen(string), (unsigned char*)&digest);    
+
+  char mdString[33];
+
+  for(int i = 0; i < 16; i++) {
+    sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
+  }
+
+  printf("md5 digest: %s\n", mdString);
+
+  return 0;
+}
+
+#endif // linux_TEST24
+
+#ifdef linux_TEST23
+#define linux_TEST23_TAG "uninit class member test"
+const char* testDescription = "linux_TEST23 2015-11-23-Mon 21:23:19 " linux_TEST23_TAG;
+#include <iostream>
+
+//using namespace std;
+class A {
+  public:
+    int a;
+    int get_a() {
+      return a;
+    }
+};
+
+int main(int argc, char** argv) {
+  std::cout << testDescription << std::endl;
+  for (int i = 0; i < 1000; ++i) {
+    A a;
+    if (a.get_a() != 0 ) {
+      std::cout << a.get_a() << std::endl;
+    }
+  }
+
+  return 0;
+}
+#endif // linux_TEST23
+
+#ifdef linux_TEST7
+#define linux_TEST7_TAG "curl escape"
+const char* testDescription = "linux_TEST7 2015-10-23-Fri 18:34:23 " linux_TEST7_TAG;
+#include <iostream>
+#include <curl/curl.h>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << testDescription << std::endl;
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    char *output = curl_easy_escape(curl, "data to convert", 15);
+    if(output) {
+      printf("Encoded: %s\n", output);
+      curl_free(output);
+    }
+  }
+  return 0;
+}
+
+#endif // linux_TEST7
+
+
+
+#ifdef linux_TEST6
+#define linux_TEST6_TAG "stringstream to string test"
+const char* testDescription = "linux_TEST6 2015-10-09-Fri 15:48:00 " linux_TEST6_TAG;
+#include <iostream>
+#include <sstream>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << testDescription << std::endl;
+  std::stringstream ss;
+  ss << 123 << "test";
+  std::cout << ss.str() << std::endl;
+  ss.clear();
+  std::cout << ss.str() << std::endl;
+
+  return 0;
+}
+
+#endif // linux_TEST6
+
+#ifdef linux_TEST5
+#define linux_TEST5_TAG "charbuf to string test&"
+const char* testDescription = "linux_TEST5 2015-09-10-Thu 16:01:38 " linux_TEST5_TAG;
+#include <iostream>
+#include <string>
+#include <regex>
+
+//using namespace std;
+
+class String {
+  public:
+    const char* str;
+    String(const char* str) {
+      this->str = str;
+    }
+  private:
+    String();
+};
+
+// segment fault here when stepping intot this function, why
+void f1(const std::string& str) {
+  std::cout << __func__ << std::endl;
+  std::cout << str << std::endl;
+}
+
+void f2(const char* str) {
+  std::cout << __func__ << std::endl;
+  std::cout << str << std::endl;
+}
+
+void f3(std::string str) {
+  std::cout << __func__ << std::endl;
+  std::cout << str << std::endl;
+}
+
+void f4(const std::string str) {
+  std::cout << __func__ << std::endl;
+  std::cout << str << std::endl;
+}
+
+void f5(String str) {
+  std::cout << __func__ << std::endl;
+  std::cout << str.str << std::endl;
+}
+
+int main(int argc, char** argv) {
+  // system("clear");
+  std::cout << testDescription << std::endl;
+
+  char str[1024];
+  sprintf(str, "test %s", "string&");
+
+  f1("test function1");
+  f2("test function2");
+  f3("test function3");
+  f4("test function4");
+  f5("test function5");
+
+  return 0;
+}
+
+#endif // linux_TEST5
+
+// vim: et sw=2 ts=2 tw=80:
+
 // vim: sw=2 ts=2 et ft=cpp
