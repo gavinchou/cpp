@@ -113,6 +113,12 @@ const char* testDescription = "TEST65 2016-10-17-Mon 11:28:46 " TEST65_TAG;
 
 //using namespace std;
 
+class A {
+public:
+  int a;
+  int b;
+};
+
 int main(int argc, char** argv) {
   for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
   std::cout << std::endl << testDescription << std::endl;
@@ -121,6 +127,34 @@ int main(int argc, char** argv) {
   pa.reset(new int());
   *pa = 1000;
   std::cout << *pa << std::endl;
+  A* tmp;
+  {
+    std::unique_ptr<A> p2(new A());
+    tmp = p2.get();
+    tmp->a = 1211;
+    // delete tmp; // deletion will succeed
+    std::cout << "=============" << std::endl;
+//     int* aaa = new int[100 * 10240];
+//     p2 = std::unique_ptr<A>(new A());
+  }
+  // delete tmp; // deletion will fail
+  std::cout << tmp->a << std::endl; // undefined behavior
+
+
+  std::shared_ptr<A> p3;
+  {
+    std::shared_ptr<A> p4(new A());
+    p4->a = 10086;
+    tmp = p4.get();
+    p3 = p4;
+//     delete tmp; // deletion will succeed, and will cause share_prt deletion falure
+    std::cout << "++++++++++++++" << std::endl;
+  }
+  //  delete tmp; // deletion will succeed, and will cause share_prt deletion falure
+  std::cout << p3->a << std::endl;
+
+  std::weak_ptr<A> p5;
+
   return 0;
 }
 #endif // TEST64
@@ -3404,5 +3438,4 @@ int main(int argc, char** argv) {
 #endif // linux_TEST5
 
 // vim: et sw=2 ts=2 tw=80:
-
-// vim: sw=2 ts=2 et ft=cpp
+// vim: sw=2 ts=2 et ft=cpp:
