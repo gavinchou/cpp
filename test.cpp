@@ -117,6 +117,10 @@ class A {
 public:
   int a;
   int b;
+  A() {
+  }
+  A(int a_, int b_): a(a_), b(b_) {
+  }
 };
 
 int main(int argc, char** argv) {
@@ -154,6 +158,12 @@ int main(int argc, char** argv) {
   std::cout << p3->a << std::endl;
 
   std::weak_ptr<A> p5;
+
+  // define a shared_ptr with make_shared
+  auto p6 = std::make_shared<A>();
+  auto p7 = std::make_shared<A>(1, 2);
+  std::cout << p6->a << p6->b << std::endl;
+  std::cout << p7->a << p7->b << std::endl;
 
   return 0;
 }
