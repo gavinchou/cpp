@@ -1,5 +1,38 @@
-#define TEST68
+#define TEST69
 
+#ifdef TEST69
+#define TEST69_TAG ""
+const char* testDescription = "TEST69 2016-10-25-Tue 13:00:29 " TEST69_TAG;
+#include <iostream>
+#include <regex.h>
+#include <sys/types.h>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  regex_t reg;
+//   const char* regex = R"((^\s*\$\(\s*([^\s]+)\s*\)\s*([+-])\s*P(\d+)([DMYHm])\s*$)|(^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s*$))";
+//   const char* regex = R"(^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s*$)";
+  const char* regex = R"(-)";
+  int cflags = REG_EXTENDED;
+  std::string str = "2016-10-25T13:00:29Z";
+  int ret = regcomp(&reg, regex, cflags);
+  std::cout << "compile reg: " << ret << std::endl;
+  regmatch_t pmatch[10];
+  size_t nmatch = sizeof(pmatch);
+  int eflags = 0;
+  char ebuf[128];
+  ret = regexec(&reg, str.c_str(), nmatch, pmatch, eflags);
+  regerror(ret, &reg, ebuf, sizeof(ebuf));
+  std::cout << "exec reg: " << ret << std::endl <<  ebuf << std::endl;
+
+//   regfree(&reg);
+
+  return 0;
+}
+#endif // TEST69
 #ifdef TEST68
 #define TEST68_TAG "group strings by prefixes"
 const char* testDescription = "TEST68 2016-10-24-Mon 19:42:56 " TEST68_TAG;
