@@ -1,4 +1,91 @@
-#define TEST65
+#define TEST68
+
+#ifdef TEST68
+#define TEST68_TAG "group strings by prefixes"
+const char* testDescription = "TEST68 2016-10-24-Mon 19:42:56 " TEST68_TAG;
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <random>
+#include <deque>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::vector<std::string> strs = {
+    "a/中文/b/c/d/e/f",
+    "a/中文/b/c/d",
+    "a/c/c/d/e/f",
+    "a/c/c/d/e",
+    "a/c/c/d",
+    "a/c/ c",
+    "a/d/c/d/e/f",
+    "a/d/c/d/e",
+    "a/d/c/d",
+    "a/d/c",
+    "a/b/c/d/e/f",
+    "a/b/c/d/e",
+    "a/b/c/d",
+    "a/b/c",
+  };
+  std::random_shuffle(strs.begin(), strs.end());
+  for (const auto& i : strs) {
+//     std::cout << i << std::endl;
+  }
+  std::sort(strs.begin(), strs.end()); // sort in lexicographic order
+  for (const auto& i : strs) {
+//     std::cout << i << std::endl;
+  }
+
+  auto starts_with = [](const std::string& str, const std::string& pre) -> bool {
+    if (str.length() < pre.length()) {
+      return false;
+    } else if (str.compare(0, pre.length(), pre) == 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  std::vector<std::deque<std::string>> prefix_groups;
+  if (strs.size() > 0) {
+    std::string pivot;
+    auto i = strs.rbegin();
+    pivot = *i;
+    ++i;
+    prefix_groups.emplace_back(1, pivot);
+    std::cout << "new group: " << pivot << std::endl;
+    auto cur_group_it = prefix_groups.begin();
+    for (; i!= strs.rend(); ++i) {
+      std::cout << "current group size: " << cur_group_it->size() << std::endl;
+      if (starts_with(pivot, *i)) {
+        cur_group_it->emplace_front(*i);
+        std::cout << "update group " << pivot << " to " << *i << std::endl;
+      } else {
+        std::cout << "new group: " << *i << std::endl;
+        prefix_groups.emplace_back(1, *i);
+        cur_group_it = std::prev(prefix_groups.end());
+      }
+      pivot = *i;
+    }
+  }
+
+  std::cout << "group size: " << prefix_groups.size() << std::endl;
+  for (const auto& i : prefix_groups) {
+    if (i.cbegin() != i.cend()) {
+      std::cout << "============ group: " << *i.cbegin() << std::endl;
+    }
+    for (const auto& j : i) {
+      std::cout << j << std::endl;
+    }
+  }
+
+  return 0;
+}
+#endif // TEST68
 
 #ifdef TEST67
 #define TEST67_TAG "template's all arguments all with default value"
