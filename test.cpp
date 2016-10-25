@@ -12,23 +12,46 @@ const char* testDescription = "TEST69 2016-10-25-Tue 13:00:29 " TEST69_TAG;
 int main(int argc, char** argv) {
   for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
   std::cout << std::endl << testDescription << std::endl;
-  regex_t reg;
+
 //   const char* regex = R"((^\s*\$\(\s*([^\s]+)\s*\)\s*([+-])\s*P(\d+)([DMYHm])\s*$)|(^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s*$))";
-//   const char* regex = R"(^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s*$)";
-  const char* regex = R"(-)";
-  int cflags = REG_EXTENDED;
-  std::string str = "2016-10-25T13:00:29Z";
-  int ret = regcomp(&reg, regex, cflags);
-  std::cout << "compile reg: " << ret << std::endl;
-  regmatch_t pmatch[10];
-  size_t nmatch = sizeof(pmatch);
-  int eflags = 0;
   char ebuf[128];
+
+  // compile
+  regex_t reg;
+//   const char* regex = R"(\s*([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)\s*)";
+  const char* regex = R"(\s*\$\(([a-zA-Z_]+)\)\s*([+-])\s*P\s*([0-9]+)\s*([DMYHm])\s*)";
+  int cflags = REG_EXTENDED;
+  int ret = regcomp(&reg, regex, cflags);
+  regerror(ret, &reg, ebuf, sizeof(ebuf));
+  std::cout << "compile reg: " << ret << ", " <<  ebuf << std::endl;
+
+  // match
+//   std::string str = "2016-10-25T13:00:29Z";
+//   std::string str(" $( lastModified)+ P7D 2016-09-22T12:58:41Z");
+  std::string str = " $(lastModified)+P7D \t";
+  regmatch_t pmatch[10];
+  size_t nmatch = sizeof(pmatch) / sizeof(regmatch_t);
+  std::cout << nmatch << std::endl;
+  int eflags = 0;
   ret = regexec(&reg, str.c_str(), nmatch, pmatch, eflags);
   regerror(ret, &reg, ebuf, sizeof(ebuf));
-  std::cout << "exec reg: " << ret << std::endl <<  ebuf << std::endl;
+  std::cout << "exec reg: " << ret << ", " <<  ebuf << std::endl;
 
-//   regfree(&reg);
+  if (ret) {
+    return -1;
+  }
+  // iterate matches
+  for (decltype(nmatch) x = 0; x < nmatch && pmatch[x].rm_so != -1; ++x) {
+    if (x == 0) {
+      std::cout << str << std::endl;
+    }
+    std::cout << x << ": "
+      << str.substr(pmatch[x].rm_so, pmatch[x].rm_eo - pmatch[x].rm_so)
+      << std::endl;
+  }
+
+  // free
+  regfree(&reg);
 
   return 0;
 }
