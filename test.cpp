@@ -1,4 +1,197 @@
-#define TEST69
+#define TEST72
+
+#ifdef TEST72
+#define TEST72_TAG "test overload ostream"
+const char* testDescription = "TEST72 2016-10-27-Thu 21:52:44 " TEST72_TAG;
+#include <iostream>
+
+//using namespace std;
+
+namespace n {
+
+struct ObjectInfo {
+    int64_t bucket_id;
+    std::string name;
+    int64_t size;
+    int64_t last_modified;
+    std::string etag;
+    int storage_class;
+    friend std::ostream& operator<<(std::ostream&output, const ObjectInfo& object) {
+      output << "object.bucket_id: " << object.bucket_id << std::endl;
+      output << "object.name: " << object.name << std::endl;
+      output << "object.size: " << object.size << std::endl;
+      output << "object.last_modified: " << object.last_modified << std::endl;
+      output << "object.etag: " << object.etag << std::endl;
+      output << "object.storage_class: " << object.storage_class << std::endl;
+      return output;
+    }
+};
+
+// std::ostream& operator<<(std::ostream& output, const ObjectInfo& object) {
+//     output << "object.bucket_id: " << object.bucket_id << std::endl;
+//     output << "object.name: " << object.name << std::endl;
+//     output << "object.size: " << object.size << std::endl;
+//     output << "object.last_modified: " << object.last_modified << std::endl;
+//     output << "object.etag: " << object.etag << std::endl;
+//     output << "object.storage_class: " << object.storage_class << std::endl;
+//     return output;
+// }
+
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  n::ObjectInfo o1 = {1, "o1", 100, 148234235, "etag", 0};
+  std::cout << o1;
+
+  return 0;
+}
+#endif // TEST72
+
+#ifdef TEST71
+#define TEST71_TAG "sort rule by priority"
+const char* testDescription = "TEST71 2016-10-26-Wed 17:15:35 " TEST71_TAG;
+#include <iostream>
+#include <vector>
+
+enum ActionCode {
+    DELETE_OBJECT = 0,
+    TRANSITION,
+    ABORT_MULTIPART_UPLOAD,
+};
+
+enum TimeExprType {
+    ABSOLUTE = 0,
+    RELATIVE,
+};
+
+struct Action {
+    ActionCode code;
+    std::string name;
+    std::string storage_class;
+};
+
+struct TimeCondition {
+    // timestamp used for comparison, objects created before it will be processed
+    int64_t lifecycle_last_modified;
+    TimeExprType type;
+};
+
+struct Rule {
+    std::string prefix;
+    Action action;
+    TimeCondition time_condition;
+};
+
+auto rule_less_then = [](const Rule& a, const Rule& b) -> int {
+    if (a.action.code < b.action.code) {
+        return 1;
+    } else {
+        return 0;
+    }
+};
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  std::cout << std::endl << testDescription << std::endl;
+  std::vector<Rule> rules;
+
+  {
+    Rule rule;
+    rule.action.code = ActionCode::TRANSITION;
+    rule.action.name = "transition";
+    rules.push_back(rule);
+  }
+
+  {
+    Rule rule;
+    rule.action.code = ActionCode::DELETE_OBJECT;
+    rule.action.name = "delete";
+    rules.push_back(rule);
+  }
+
+  {
+    Rule rule;
+    rule.action.code = ActionCode::ABORT_MULTIPART_UPLOAD;
+    rule.action.name = "multipart";
+    rules.push_back(rule);
+  }
+
+  for (const auto& i : rules) {
+    std::cout << i.action.code << " " << i.action.name << std::endl;
+  }
+
+  std::cout << "===============================" << std::endl;
+
+  std::sort(rules.begin(), rules.end(), rule_less_then);
+
+  for (const auto& i : rules) {
+    std::cout << i.action.code << " " << i.action.name << std::endl;
+  }
+
+  return 0;
+}
+#endif // TEST71
+
+#ifdef TEST70
+#define TEST70_TAG "atomic test"
+const char* testDescription = "TEST70 2016-10-25-Tue 17:25:50 " TEST70_TAG;
+#include <iostream>
+#include <atomic>
+#include <thread>
+#include <vector>
+#include <iostream>
+
+//using namespace std;
+
+class A {
+public:
+  int val;
+  A(const int& a): val(a) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+  }
+  A(const A& other) {
+    this->val = other.val;
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+  }
+  A& operator=(int a) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    this->val = a;
+    return *this;
+  }
+};
+
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::atomic<int> a(0);
+//   std::atomic<int> b = 0;
+  a.operator=(56);
+  auto worker = [&a] () -> void {++a;};
+
+//   std::vector<std::thread> ths;
+//   for (int i = 0; i < 5; ++i) {
+//     ths.emplace_back(worker);
+//     ths.push_back(std::thread(worker));
+//   }
+//   for (const auto& t : ths) {
+//     t.join();
+//   }
+
+//   std::cout << a << std::endl;
+
+  A a0(1);
+  A a1(a0);
+  auto a2 = a1;
+  A a3 = 1;
+  a3 = 2;
+
+  return 0;
+}
+#endif // TEST70
 
 #ifdef TEST69
 #define TEST69_TAG ""
