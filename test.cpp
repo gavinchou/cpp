@@ -1,4 +1,130 @@
-#define TEST72
+#define TEST74
+
+#ifdef TEST74
+#define TEST74_TAG "std::async differ, future test \n"\
+                   "--- async is scoped according to where 'future' is defined" \
+                   " it's more like creating a thread and joining it automaticly"
+const char* testDescription = "TEST74 2016-10-31-Mon 11:26:19 " TEST74_TAG;
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <future>
+
+//using namespace std;
+
+template <typename T>
+// class Differ : std::future<T> {
+class Defer {
+public:
+  std::function<T>& _what;
+  Defer(std::function<T>& what): _what(what) {
+  }
+  ~Defer() {
+    _what();
+  }
+};
+
+void call_async_inner() {
+  std::future<void> fut2 = std::async(std::launch::async,
+      []()->void {
+        std::cout << "async statamtent" << std::endl;
+    });
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::cout << "async inner sleep" << std::endl;
+}
+
+// std::future<void> async_fut;
+std::vector<std::future<void>> futs;
+void call_async_outter() {
+  auto async_fut = std::async(std::launch::async,
+      []()->void {
+        std::cout << "async statamtent outer" << std::endl;
+    });
+  futs.push_back(std::move(async_fut));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::cout << "async outter sleep" << std::endl;
+}
+
+void call_deferred_inner() {
+  // the task is executed on the calling thread the first time its result is
+  // requested --- call get(), (lazy evaluation)
+  std::future<void> fut1 = std::async(std::launch::deferred,
+      []()->void {
+        std::cout << "differed statamtent" << std::endl;
+    });
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::cout << "deferred inner sleep" << std::endl;
+  // before return, get() will be called automaticly
+}
+
+void call_deferred_outter() {
+  auto async_fut = std::async(std::launch::async,
+      []()->void {
+        std::cout << "deferred statamtent outer" << std::endl;
+    });
+  futs.push_back(std::move(async_fut));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::cout << "deferred outter sleep" << std::endl;
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+
+  call_async_inner(); // this call is not async, it will wait for the async contents executed
+  std::cout << "after calling async inner" << std::endl;
+
+  call_deferred_inner();
+  std::cout << "after calling deferred inner" << std::endl;
+
+  call_async_outter(); // this call will be async? not proved
+  std::cout << "after calling async outter" << std::endl;
+
+  call_deferred_outter(); // this call will be async? not proved
+  std::cout << "after calling deferred outter" << std::endl;
+  return 0;
+}
+#endif // TEST74
+
+#ifdef TEST73
+#define TEST73_TAG "conditional variable test"
+const char* testDescription = "TEST73 2016-10-30-Sun 17:09:19 " TEST73_TAG;
+#include <iostream>
+#include <thread>
+#include <memory>
+#include <vector>
+#include <condition_variable>
+
+//using namespace std;
+
+class A {
+public:
+  std::vector<std::thread> ths;
+  void foo() {
+//     std::thread th([this]()->void { this->bar(); });
+    ths.push_back(std::thread([this]()->void { this->bar(); }));
+    std::cout << "return " << __PRETTY_FUNCTION__ << std::endl;
+  }
+  void bar() {
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+  }
+  ~A() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    for (auto& i : ths) {
+      i.join();
+    }
+  }
+};
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  A a;
+  a.foo();
+  return 0;
+}
+#endif // TEST73
 
 #ifdef TEST72
 #define TEST72_TAG "test overload ostream"
@@ -249,6 +375,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 #endif // TEST69
+
 #ifdef TEST68
 #define TEST68_TAG "group strings by prefixes"
 const char* testDescription = "TEST68 2016-10-24-Mon 19:42:56 " TEST68_TAG;
@@ -265,20 +392,32 @@ int main(int argc, char** argv) {
   for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
   std::cout << std::endl << testDescription << std::endl;
   std::vector<std::string> strs = {
-    "a/中文/b/c/d/e/f",
-    "a/中文/b/c/d",
-    "a/c/c/d/e/f",
-    "a/c/c/d/e",
-    "a/c/c/d",
-    "a/c/ c",
-    "a/d/c/d/e/f",
-    "a/d/c/d/e",
-    "a/d/c/d",
-    "a/d/c",
-    "a/b/c/d/e/f",
-    "a/b/c/d/e",
-    "a/b/c/d",
-    "a/b/c",
+      "a/b/c",
+      "a/b/c/d",
+      "a/b/c/d/e",
+      "a/b/c/d/e/f",
+      "a/c/ c",
+      "a/c/c/d",
+      "a/c/c/d/e",
+      "a/c/c/d/e/f",
+      "a/d/c",
+      "a/d/c/d",
+      "a/d/c/d/e",
+      "a/d/c/d/e/f",
+      "a/中文/b/c/d",
+      "a/中文/b/c/d/e/f",
+      "abort/",
+      "p1/",
+      "p1/p1/",
+      "p1/p1/p1/",
+      "p2/",
+      "p2/p2/",
+      "p2/p2/p2/",
+      "prefix-delete/",
+      "prefix/",
+      "transition+delete/",
+      "transition-abs/",
+      "transition/",
   };
   std::random_shuffle(strs.begin(), strs.end());
   for (const auto& i : strs) {
@@ -506,7 +645,7 @@ int main(int argc, char** argv) {
 #endif // TEST64
 
 #ifdef TEST64
-#define TEST64_TAG "string resize test --- resize will not trigger reallocation"
+#define TEST64_TAG "string resize test --- resize/clear will not trigger reallocation"
 const char* testDescription = "TEST64 2016-10-17-Mon 11:28:46 " TEST64_TAG;
 #include <iostream>
 #include <string>
