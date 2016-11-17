@@ -1,4 +1,311 @@
-#define TEST74
+#define TEST65
+
+#ifdef TEST81
+#define TEST81_TAG "string find test"
+const char* testDescription = "TEST81 2016-11-14-Mon 22:05:27 " TEST81_TAG;
+#include <iostream>
+#include <string>
+#include <vector>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::vector<std::string> strs = {
+      "./co nf/abc.conf",
+      "abcdef.conf",
+      "/users/gavin/tmp/conf",
+    };
+  for (auto& i : strs) {
+    std::cout << i << std::endl;
+    auto last_slash_pos = i.find_last_of("/");
+    std::string parent_path;
+    std::string conf_file_name;
+    if (last_slash_pos == std::string::npos) {
+      std::cerr << "not fount slash" << std::endl;
+      parent_path = "";
+      conf_file_name = i;
+    } else {
+      parent_path = i.substr(0, last_slash_pos);
+      conf_file_name = i.substr(last_slash_pos + 1);
+    }
+    std::cout << "conf file parent path: " << parent_path << std::endl;
+    std::cout << "conf file name: " << conf_file_name << std::endl;
+  }
+  return 0;
+}
+#endif // TEST81
+
+#ifdef TEST80
+#define TEST80_TAG "thread detach join multiple times test"
+const char* testDescription = "TEST80 2016-11-08-Tue 13:13:26 " TEST80_TAG;
+#include <iostream>
+#include <thread>
+
+//using namespace std;
+
+void test_detach_twice() {
+  std::thread th([]{
+      std::cout << "thread1++" << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(5));
+      std::cout << "thread1--" << std::endl;
+    });
+  std::cout << "thread joinable: " << th.joinable() << std::endl;
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  th.detach();
+  std::cout << "detach, thread joinable: " << th.joinable() << std::endl;
+  try {
+    std::cout << "detach twice" << std::endl;
+    th.detach();
+  } catch (...) {
+    std::cout << "detach twice exception" << std::endl;
+  }
+}
+
+void test_join_twice() {
+  auto desc = __PRETTY_FUNCTION__;
+  std::thread th([desc]{
+      std::cout << "thread1++" << desc << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      std::cout << "thread1--" << desc << std::endl;
+    });
+  std::cout << "thread joinable: " << th.joinable() << std::endl;
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  th.join();
+  std::cout << "join, thread joinable: " << th.joinable() << std::endl;
+  try {
+    std::cout << "join twice" << std::endl;
+    th.join();
+  } catch (...) {
+    std::cout << "join twice exception" << std::endl;
+  }
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+
+  test_join_twice();
+
+  return 0;
+}
+#endif // TEST80
+
+#ifdef TEST79
+#define TEST79_TAG "execlp execute program overlay"
+const char* testDescription = "TEST79 2016-11-03-Thu 21:54:16 " TEST79_TAG;
+#include <iostream>
+#include <unistd.h>
+
+//using namespace std;
+
+/*
+#include <unistd.h>
+
+extern char **environ;
+
+int execl(const char *path, const char *arg, ...);
+int execlp(const char *file, const char *arg, ...);
+int execle(const char *path, const char *arg, ..., char * const envp[]);
+int execv(const char *path, char *const argv[]);
+int execvp(const char *file, char *const argv[]);
+int execvpe(const char *file, char *const argv[],
+char *const envp[]);
+*/
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  int ret = execlp("/Users/gavin/bin/vim", "/Users/gavin/bin/vim");
+  std::cout << "ret: " << ret << std::endl;
+  return 0;
+}
+#endif // TEST79
+
+#ifdef TEST78
+#define TEST78_TAG "list std::move move constructor:"\
+                   " list's move constructor gives up ownership and creates a new list"
+const char* testDescription = "TEST78 2016-11-03-Thu 14:49:58 " TEST78_TAG;
+#include <iostream>
+#include <list>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+
+  std::list<int> li1;
+  for (int i = 0; i < 100; ++i) {
+    li1.push_back(i);
+  }
+  std::cout << "list 1 size: " << li1.size() << std::endl; // 100
+  decltype(li1) li2;
+  li2 = std::move(li1);
+  std::cout << "moved list 1" << std::endl;
+  std::cout << "list 1 size: " << li1.size() << std::endl; // 0
+  std::cout << "list 2 size: " << li2.size() << std::endl; // 100
+  std::cout << "manipulate list 1 " << std::endl;
+  for (int i = 0; i < 100; ++i) {
+    li1.push_back(i);
+  }
+  std::cout << "list 1 size: " << li1.size() << std::endl; // 100
+  std::cout << "list 2 size: " << li2.size() << std::endl; // 100
+
+  return 0;
+}
+#endif // TEST78
+
+#ifdef TEST77
+#define TEST77_TAG "stream run in thread --- seems no problem"
+const char* testDescription = "TEST77 2016-11-02-Wed 15:36:46 " TEST77_TAG;
+#include <iostream>
+#include <fstream>
+#include <thread>
+#include <string>
+#include <memory>
+
+//using namespace std;
+
+class Reader {
+public:
+  std::fstream f;
+  std::shared_ptr<std::fstream> fp;
+  Reader() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    f.open("/users/gavin/tmp/bucket_info.txt");
+    fp = std::make_shared<std::fstream>();
+    fp->open("/users/gavin/tmp/bucket_info.txt");
+  }
+  void read() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::thread th([this]()->void {
+        std::string line;
+        std::cout << "is open: " << f.is_open() << std::endl;
+        while (getline(f, line)) {
+          std::cout << line << std::endl;
+        }
+      });
+    th.detach();
+  }
+  void read1() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::thread th([this]()->void {
+        std::string line;
+        std::cout << "is open: " << fp->is_open() << std::endl;
+        while (getline(*fp, line)) {
+          std::cout << line << std::endl;
+        }
+      });
+    th.detach();
+  }
+};
+
+void test_with_thread() {
+  std::fstream f;
+  f.open("/users/gavin/tmp/bucket_info.txt");
+  if (!f.is_open()) {
+    std::cout << "not open" << std::endl;
+    return;
+  }
+
+  std::thread th([&f]()->void {
+      std::string line;
+      while (getline(f, line)) {
+        std::cout << line << std::endl;
+      }
+    });
+
+  th.join();
+}
+
+void test_with_class() {
+  Reader r;
+  r.read();
+//   r.read1();
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  test_with_class();
+  return 0;
+}
+#endif // TEST77
+
+#ifdef TEST76
+#define TEST76_TAG "multimap get value test"
+const char* testDescription = "TEST76 2016-11-01-Tue 20:25:20 " TEST76_TAG;
+#include <iostream>
+#include <map>
+
+//using namespace std;
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::multimap<int, std::string> m;
+//   m[1] = "1";
+//   m[2] = "2";
+//   m[3] = "3";
+  m.insert({1, "1"});
+  m.insert({1, "11"});
+  m.insert({1, "111"});
+  m.insert({1, "1111"});
+  m.insert({2, "2"});
+  m.insert({2, "22"});
+  m.insert({2, "222"});
+  m.insert({2, "2222"});
+  m.insert({3, "3"});
+  m.insert({3, "33"});
+  m.insert({3, "333"});
+  m.insert({3, "3333"});
+  auto erange = m.equal_range(5);
+  if (erange.first == m.end()) {
+    std::cout << "range not found" << std::endl;
+  }
+  auto it = std::find_if(erange.first, erange.second,
+      [](decltype(*erange.first) e)->bool {
+        return e.first == 2 ? true : false;
+      }
+    );
+  if (it == erange.second) {
+    std::cout << "xxxxxxxxxxxxxxx" << std::endl;
+  } else {
+    std::cout << "==================" << std::endl;
+  }
+
+  return 0;
+}
+#endif // TEST76
+
+#ifdef TEST75
+#define TEST75_TAG "static member overloading test"
+const char* testDescription = "TEST75 2016-10-31-Mon 16:30:51 " TEST75_TAG;
+#include <iostream>
+#include <sstream>
+#include <map>
+#include <typeinfo>
+
+//using namespace std;
+
+class A {
+public: 
+  A();
+};
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  std::stringstream ss;
+  ss << R"(abc)" << R"(def)" << "fjdksl";
+  std::cout << ss.str() << std::endl;;
+  std::multimap<int, std::string> m;
+  std::cout << typeid(decltype(ss.str(""))).name() << std::endl;;
+  return 0;
+}
+#endif // TEST75
 
 #ifdef TEST74
 #define TEST74_TAG "std::async differ, future test \n"\
@@ -87,13 +394,15 @@ int main(int argc, char** argv) {
 #endif // TEST74
 
 #ifdef TEST73
-#define TEST73_TAG "conditional variable test"
+#define TEST73_TAG "condition variable test"
 const char* testDescription = "TEST73 2016-10-30-Sun 17:09:19 " TEST73_TAG;
 #include <iostream>
 #include <thread>
 #include <memory>
 #include <vector>
 #include <condition_variable>
+#include <mutex>
+#include <vector>
 
 //using namespace std;
 
@@ -117,11 +426,43 @@ public:
   }
 };
 
+std::mutex mtx;
+std::condition_variable cv0;
+std::condition_variable cv1;
+bool quit = false;
+
+void foo(int i) {
+  while (!quit) {
+    std::unique_lock<std::mutex> lck(mtx);
+    if (!cv0.wait_for(lck, std::chrono::milliseconds(10), []{return quit;})) {
+      continue;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::cout << "test " << i << std::endl;
+  }
+}
+
+void bar() {
+  std::unique_lock<std::mutex> lck(mtx);
+  std::cout << "test" << std::endl;
+}
+
 int main(int argc, char** argv) {
   for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
   std::cout << std::endl << testDescription << std::endl;
-  A a;
-  a.foo();
+  std::vector<std::thread> ths;
+  for (int i = 0; i < 10; ++i) {
+    ths.emplace_back(foo, i);
+  }
+
+  for (int i = 0; i < 10; ++i) {
+    cv0.notify_one();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  quit = true;
+  for (auto& i : ths) {
+    i.join();
+  }
   return 0;
 }
 #endif // TEST73
@@ -593,14 +934,17 @@ public:
   int a;
   int b;
   A() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
   A(int a_, int b_): a(a_), b(b_) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+  }
+  ~A() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
 
-int main(int argc, char** argv) {
-  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
-  std::cout << std::endl << testDescription << std::endl;
+void test_multiple_delete() {
   int a = 100;
   std::shared_ptr<int> pa;// = std::make_shared<int>(new int());
   pa.reset(new int());
@@ -639,7 +983,21 @@ int main(int argc, char** argv) {
   auto p7 = std::make_shared<A>(1, 2);
   std::cout << p6->a << p6->b << std::endl;
   std::cout << p7->a << p7->b << std::endl;
+}
 
+void test_destructor() {
+  std::shared_ptr<A> p1 = std::make_shared<A>();
+  std::cout << "re assign" << std::endl;
+  p1 = std::make_shared<A>();
+  std::cout << "reset" << std::endl;
+  p1.reset(new A());
+  std::cout << "end test" << std::endl;
+}
+
+int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) { std::cout << argv[i] << " "; }
+  std::cout << std::endl << testDescription << std::endl;
+  test_destructor();
   return 0;
 }
 #endif // TEST64
@@ -2780,8 +3138,7 @@ char rfc3986[256] = {0};
 char html5[256] = {0};
 
 /* caller responsible for memory */
-void encode(const char *s, char *enc, char *tb)
-{
+void encode(const char *s, char *enc, char *tb) {
   for (; *s; s++) {
     if (tb[*s]) {
       sprintf(enc, "%c", tb[*s]);
@@ -3720,6 +4077,11 @@ int main(int argc, char *argv[]) {
 
 #endif // linux_TEST28
 
+#ifdef linux_TEST25
+#define linux_TEST25_TAG "test memory address"
+const char* testDescription = "linux_TEST25 2016-04-08-Fri 11:03:15 " linux_TEST25_TAG;
+#include <iostream>
+
 std::string binary_to_hex_string(const char* binary, size_t length,
     bool is_upper = true) {
   const char* const lut = "0123456789ABCDEF";
@@ -3731,11 +4093,6 @@ std::string binary_to_hex_string(const char* binary, size_t length,
   ret += "";
   return ret;
 }
-
-#ifdef linux_TEST25
-#define linux_TEST25_TAG "test memory address"
-const char* testDescription = "linux_TEST25 2016-04-08-Fri 11:03:15 " linux_TEST25_TAG;
-#include <iostream>
 
 //using namespace std;
 
@@ -3766,8 +4123,7 @@ const char* testDescription = "linux_TEST24 2016-02-04-Thu 11:05:44 " linux_TEST
 #include <string.h>
 #include <openssl/md5.h>
 
-int main()
-{
+int main() {
   unsigned char digest[MD5_DIGEST_LENGTH];
   char string[] = "happy";
 
@@ -3836,10 +4192,8 @@ int main(int argc, char** argv) {
 
 #endif // linux_TEST7
 
-
-
 #ifdef linux_TEST6
-#define linux_TEST6_TAG "stringstream to string test"
+#define linux_TEST6_TAG "sstream/stringstream string clear init"
 const char* testDescription = "linux_TEST6 2015-10-09-Fri 15:48:00 " linux_TEST6_TAG;
 #include <iostream>
 #include <sstream>
@@ -3848,11 +4202,27 @@ const char* testDescription = "linux_TEST6 2015-10-09-Fri 15:48:00 " linux_TEST6
 
 int main(int argc, char** argv) {
   std::cout << testDescription << std::endl;
-  std::stringstream ss;
+  std::ostringstream ss;
   ss << 123 << "test";
   std::cout << ss.str() << std::endl;
   ss.clear();
   std::cout << ss.str() << std::endl;
+
+  for (int64_t i = 10086; i < 10086 + 100; ++i) {
+    ss.str("bucket-"); // output position
+    ss.seekp(std::strlen("bucket-"));
+    ss << i;
+    std::cout << ss.str();
+    ss.str("");
+    ss << " prefix-";
+    ss << i;
+    std::cout << ss.str();
+    ss.str("");
+    ss << " marker-";
+    ss << i;
+    std::cout << ss.str() << std::endl;
+  }
+
 
   return 0;
 }
