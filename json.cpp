@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <map>
+#include <vector>
 #include <stack>
 
 enum JsonState {
@@ -49,6 +50,25 @@ std::map<JsonState, std::string> state_map = {
     {JsonState::END, "END"},
 };
 
+enum JsonValueType {
+    STRING_TYPE,
+    OBJECT_TYPE,
+    ARRAY_TYPE,
+    NUMBER_TYPE,
+    BOOLEAN_TYPE,
+    NULL_VLAUE_TYPE,
+};
+
+struct JsonValue {
+    std::map<std::string, std::shared_ptr<JsonValue>> object;
+    std::vector<std::shared_ptr<JsonValue>> array;
+    std::shared_ptr<std::string> string;
+    std::shared_ptr<std::string> number;
+    std::shared_ptr<std::string> boolean;
+    std::shared_ptr<std::string> null;
+    JsonValueType type;
+};
+
 int format_json(const std::string& json, int indent_size, bool compress, std::string* out);
 
 int prettify_json(const std::string& json, int indent_size, std::string* out) {
@@ -75,7 +95,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
             }
             return str;
         };
-    std::string white_chars = " \t\n\r";
+    const std::string white_chars = " \t\n\r";
     auto is_white_char = [&white_chars](char c)-> bool {
             return white_chars.find(c) != std::string::npos;
         };
@@ -107,7 +127,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     container_ctx.push(JsonState::ARRAY);
                     ss << c << line_break << indents(++indent);
                 } else if (!is_white_char(c)) {
-                    std::cout << "malformat json" << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -126,7 +146,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     }
                     ss << line_break << indents(--indent) << c;
                 } else if (!is_white_char(c)) {
-                    std::cerr << "malformat json" << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -139,7 +159,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                         key = '"';
                         ss << c;
                     } else if (!is_white_char(c)) {
-                        std::cerr << "malformat json at: " << i << std::endl;
+                        std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                         return i;
                     }
                 } else {
@@ -159,7 +179,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     ss << key_value_separator; // separator
                     state = JsonState::VALUE;
                 } else if (!is_white_char(c)) {
-                    std::cerr << "malformat json at: " << i << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -191,7 +211,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     null = c;
                     ss << c;
                 } else if (!is_white_char(c)) {
-                    std::cerr << "malformat json" << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -206,7 +226,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                 }
                 break;
             }
-            case JsonState::STRING: {
+            case JsonState::STRING: { // be aware of encoding
                 std::cout << "state: " << state_map[state] << ", char: " << c /*<< " -> "*/ << std::endl;
                 if (c == '"' && last_char != '\\') {
                     ss << c;
@@ -227,7 +247,8 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     if (number.rfind('.') != number.find('.')
                             || number.rfind('-') != number.find('-')
                             || number.rfind('e') != number.find('e')) {
-                        std::cerr << "malformat json, at: " << i << std::endl;
+                        std::cerr << "expect a number, but '" << number << "' given, at: "
+                            << i << std::endl;
                         return i;
                     }
                 } else if (is_white_char(c) || c == ']' || c == '}' || c == ',') {
@@ -235,7 +256,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     state = JsonState::END_VALUE;
                     continue;
                 } else {
-                    std::cerr << "malformat json, at: " << i << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -247,14 +268,15 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     ss << c;
                 } else if (is_white_char(c) || c == '}' || c == ']' || c == ',') {
                     if (boolean != "true" && boolean != "false") {
-                        std::cerr << "malformat json, at: " << i << std::endl;
+                        std::cerr << "expect 'true' or 'false', but '" << boolean << "' given, at: "
+                            << i << std::endl;
                         return i;
                     }
                     boolean.clear();
                     state = JsonState::END_VALUE;
                     continue;
                 } else {
-                    std::cerr << "malformat json, at: " << i << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -266,14 +288,15 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     ss << c;
                 } else if (is_white_char(c) || c == '}' || c == ']' || c == ',') {
                     if (null != "null") {
-                        std::cerr << "malformat json, at: " << i << std::endl;
+                        std::cerr << "expect 'null', but '" << null << "' given, at: "
+                            << i << std::endl;
                         return i;
                     }
                     boolean.clear();
                     state = JsonState::END_VALUE;
                     continue;
                 } else {
-                    std::cerr << "malformat json, at: " << i << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -299,7 +322,8 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     }
                     ss << line_break << indents(--indent) << c;
                 } else if (!is_white_char(c)) {
-                    std::cerr << "malformat json" << std::endl;
+                    std::cerr << "expect '}', ']' or ',', but '" << c << "' given, at: "
+                        << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -335,7 +359,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
                     }
                     ss << line_break << indents(--indent) << c;
                 } else if (!is_white_char(c)) {
-                    std::cerr << "malformat json" << std::endl;
+                    std::cerr << "undefined identifier: " << c <<  ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -354,7 +378,7 @@ int format_json(const std::string& json, int indent_size, bool compress, std::st
             case JsonState::END: {
                 std::cout << "state: " << state_map[state] << ", char: " << c /*<< " -> "*/ << std::endl;
                 if (!is_white_char(c)) {
-                    std::cerr << "malformat json, at: " << i << std::endl;
+                    std::cerr << "expect an EOF, but '" << c << "' given" << ", at: " << i << std::endl;
                     return i;
                 }
                 ++i;
@@ -386,18 +410,20 @@ int main(void) {
         json += line;
     }
 //     [1, 2, {}, []]
-//     json = R"(
-//     [{    }, [] ,[],{},[]]
-//     )";
+    json = R"(
+    [{"no": 1.2    }, ["":""] ,[],{},[]]
+    )";
     std::cout << json.substr(0, 127) << std::endl;
     int ret = prettify_json(json, 3, &json_out);
-    if (ret != 0) {
+    if (ret != 0 && json_out.empty()) {
         std::cout << "error: " << ret << std::endl;
+        return -1;
     }
     std::cout << json_out << std::endl;
     ret = compress_json(json_out, &json);
-    if (ret != 0) {
+    if (ret != 0 && json.empty()) {
         std::cout << "error: " << ret << std::endl;
+        return -1;
     }
     std::cout << json << std::endl;
     return 0;
